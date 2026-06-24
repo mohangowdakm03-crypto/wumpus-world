@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Wumpus World V3</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <header>
+            <h1>Wumpus World <span style="font-size: 1.5rem; color: var(--accent-gold);">V3</span></h1>
+            <p id="subtitle" class="subtitle">Hunt the Wumpus, find the Gold, escape alive.</p>
+            <div class="settings-container">
+                <div class="settings-row">
+                    <label for="game-mode">Mode:</label>
+                    <select id="game-mode">
+                        <option value="sandbox">Sandbox</option>
+                        <option value="campaign">Campaign</option>
+                    </select>
+                    
+                    <label for="difficulty" class="sandbox-only">Size:</label>
+                    <select id="difficulty" class="sandbox-only">
+                        <option value="easy">Easy (4x4)</option>
+                        <option value="medium">Medium (6x6)</option>
+                        <option value="hard">Hard (8x8)</option>
+                    </select>
+
+                    <label for="cave-type" class="sandbox-only">Cave:</label>
+                    <select id="cave-type" class="sandbox-only">
+                        <option value="grid">Grid</option>
+                        <option value="organic">Organic</option>
+                    </select>
+                </div>
+                <div class="settings-row">
+                    <button id="btn-help" class="sound-btn" aria-label="Help & Controls" title="Help & Controls">❓</button>
+                    <button id="btn-ai" class="ai-btn">🤖 Auto-Play (AI)</button>
+                    <button id="btn-toggle-sound" class="sound-btn" aria-label="Toggle Sound">🔊</button>
+                </div>
+            </div>
+        </header>
+
+        <main class="game-container">
+            <section class="board-section">
+                <div class="board-wrapper" id="board-wrapper">
+                    <div id="game-board" class="grid"></div>
+                    <canvas id="fx-canvas"></canvas>
+                </div>
+                <div class="controls-overlay" id="controls-panel">
+                    <button id="btn-up" class="control-btn" aria-label="Move Up">↑</button>
+                    <div class="control-row">
+                        <button id="btn-left" class="control-btn" aria-label="Move Left">←</button>
+                        <button id="btn-down" class="control-btn" aria-label="Move Down">↓</button>
+                        <button id="btn-right" class="control-btn" aria-label="Move Right">→</button>
+                    </div>
+                    <div class="action-row">
+                        <button id="btn-shoot" class="action-btn">Shoot 🏹</button>
+                        <button id="btn-grab" class="action-btn">Grab 💰</button>
+                        <button id="btn-climb" class="action-btn">Climb 🧗</button>
+                    </div>
+                    <p class="mobile-hint">Swipe to move!</p>
+                </div>
+            </section>
+
+            <section class="status-section">
+                <div class="panel state-panel">
+                    <h2>Game State</h2>
+                    <div class="stats">
+                        <div class="stat-item">
+                            <span class="icon">🏹</span>
+                            <span class="label">Arrows</span>
+                            <span id="stat-arrows" class="value">1</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="icon">💰</span>
+                            <span class="label">Gold</span>
+                            <span id="stat-gold" class="value">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="icon">🎯</span>
+                            <span class="label">Score</span>
+                            <span id="stat-score" class="value">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel inventory-panel">
+                    <h2>Inventory</h2>
+                    <div class="inventory-slots">
+                        <div id="inv-torch" class="inv-slot" title="Torch: Increases vision">
+                            <span class="icon">🔥</span><span class="qty">0</span>
+                        </div>
+                        <div id="inv-rope" class="inv-slot" title="Rope: Saves you from pits">
+                            <span class="icon">🧵</span><span class="qty">0</span>
+                        </div>
+                        <div id="inv-potion" class="inv-slot" title="Potion: Saves you from the Wumpus">
+                            <span class="icon">🧪</span><span class="qty">0</span>
+                        </div>
+                        <div id="inv-map" class="inv-slot" title="Magic Map: Reveals 3 safe cells">
+                            <span class="icon">🗺️</span><span class="qty">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel percepts-panel">
+                    <h2>Percepts</h2>
+                    <div id="percepts-display" class="percepts-container"></div>
+                </div>
+
+                <div class="panel highscore-panel">
+                    <h2>High Scores</h2>
+                    <div id="highscore-list" class="highscore-container"></div>
+                </div>
+
+                <div class="panel log-panel">
+                    <h2>Adventure Log</h2>
+                    <div id="game-log" class="log-container"></div>
+                </div>
+                
+                <button id="btn-restart" class="restart-btn">Restart Game</button>
+            </section>
+        </main>
+        
+        <div id="game-modal" class="modal hidden">
+            <div class="modal-content">
+                <h2 id="modal-title">Game Over</h2>
+                <p id="modal-message">You died.</p>
+                <button id="modal-btn" class="primary-btn">Play Again</button>
+            </div>
+        </div>
+
+        <div id="help-modal" class="modal hidden">
+            <div class="modal-content" style="text-align: left; max-width: 500px; max-height: 80vh; overflow-y: auto;">
+                <h2 style="color: var(--accent-gold); text-align: center;">Controls & Rules</h2>
+                <div style="margin-top: 1rem;">
+                    <h3 style="color: var(--accent-cyan); margin-bottom: 0.3rem;">Movement</h3>
+                    <ul style="list-style-type: none; padding-left: 0; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem; line-height: 1.4;">
+                        <li><strong>W, A, S, D</strong> or <strong>Arrow Keys</strong>: Move</li>
+                        <li><strong>Swipe</strong>: Move (Mobile/Touch)</li>
+                    </ul>
+                    <h3 style="color: var(--accent-cyan); margin-bottom: 0.3rem;">Actions</h3>
+                    <ul style="list-style-type: none; padding-left: 0; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem; line-height: 1.4;">
+                        <li><strong>F</strong> or <strong>Shoot Btn</strong>: Shoot Arrow (kills Wumpus in direction facing)</li>
+                        <li><strong>G</strong> or <strong>Grab Btn</strong>: Grab Item (Gold, Potion, Map, etc.)</li>
+                        <li><strong>C</strong> or <strong>Climb Btn</strong>: Climb out (Only at the start cell, must have Gold to win)</li>
+                    </ul>
+                    <h3 style="color: var(--accent-cyan); margin-bottom: 0.3rem;">Items (Passive)</h3>
+                    <ul style="list-style-type: none; padding-left: 0; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem; line-height: 1.4;">
+                        <li>🔥 <strong>Torch</strong>: Automatically increases your vision radius.</li>
+                        <li>🧵 <strong>Rope</strong>: Automatically saves you if you fall into a pit.</li>
+                        <li>🧪 <strong>Potion</strong>: Automatically revives you if eaten by the Wumpus.</li>
+                        <li>🗺️ <strong>Map</strong>: Read immediately upon grabbing to reveal 3 safe rooms.</li>
+                    </ul>
+                </div>
+                <div style="text-align: center; margin-top: 1.5rem;">
+                    <button id="close-help-btn" class="primary-btn">Got it!</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
